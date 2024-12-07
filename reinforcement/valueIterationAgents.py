@@ -42,22 +42,28 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.discount = discount
         self.iterations = iterations
         self.values = util.Counter() # A Counter is a dict with default 0
+        self.runValueIteration()
 
-        # Write value iteration code here
+    def runValueIteration(self):
+        """
+          Run the value iteration algorithm. Note that in standard
+          value iteration, V_k+1(...) depends on V_k(...)'s.
+        """
         "*** YOUR CODE HERE ***"
+        # Write value iteration code here
         while self.iterations > 0:
             tempValues = self.values.copy()
-            allStates = mdp.getStates()
+            allStates = self.mdp.getStates()
             for state in allStates:
-                allActionsForState = mdp.getPossibleActions(state)
+                allActionsForState = self.mdp.getPossibleActions(state)
                 chanceNodeValues = []
                 for action in allActionsForState:
-                    finalStates = mdp.getTransitionStatesAndProbs(state, action)
+                    finalStates = self.mdp.getTransitionStatesAndProbs(state, action)
                     weightedAverage = 0
                     for finalState in finalStates:
                         nextState = finalState[0]
                         probability = finalState[1]
-                        weightedAverage += (probability * (mdp.getReward(state, action, nextState) + (discount * tempValues[nextState])))
+                        weightedAverage += (probability * (self.mdp.getReward(state, action, nextState) + (self.discount * tempValues[nextState])))
                     chanceNodeValues.append(weightedAverage)
                 if len(chanceNodeValues) != 0:
                     self.values[state] = max(chanceNodeValues)
