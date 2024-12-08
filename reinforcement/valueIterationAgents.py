@@ -50,24 +50,32 @@ class ValueIterationAgent(ValueEstimationAgent):
           value iteration, V_k+1(...) depends on V_k(...)'s.
         """
         "*** YOUR CODE HERE ***"
-        # Write value iteration code here
         while self.iterations > 0:
             tempValues = self.values.copy()
-            allStates = self.mdp.getStates()
-            for state in allStates:
-                allActionsForState = self.mdp.getPossibleActions(state)
-                chanceNodeValues = []
-                for action in allActionsForState:
-                    finalStates = self.mdp.getTransitionStatesAndProbs(state, action)
-                    weightedAverage = 0
-                    for finalState in finalStates:
-                        nextState = finalState[0]
-                        probability = finalState[1]
-                        weightedAverage += (probability * (self.mdp.getReward(state, action, nextState) + (self.discount * tempValues[nextState])))
-                    chanceNodeValues.append(weightedAverage)
-                if len(chanceNodeValues) != 0:
-                    self.values[state] = max(chanceNodeValues)
+            for state in self.mdp.getStates():
+                self.values[state] = self.computeStateValue(state, tempValues)
             self.iterations -= 1
+
+    def computeStateValue(self, state, tempValues):
+        """
+        Compute the maximum value for a given state using Bellman Equation.
+        """
+        actions = self.mdp.getPossibleActions(state)
+        if not actions:  # Terminal state
+            return 0.0
+
+        actionValues = [self.computeActionValue(state, action, tempValues) for action in actions]
+        return max(actionValues)
+
+    def computeActionValue(self, state, action, tempValues):
+        """
+        Compute the value of an action for a given state based on the transition probabilities.
+        """
+        weightedAverage = 0
+        for nextState, probability in self.mdp.getTransitionStatesAndProbs(state, action):
+            reward = self.mdp.getReward(state, action, nextState)
+            weightedAverage += probability * (reward + self.discount * tempValues[nextState])
+        return weightedAverage
 
 
     def getValue(self, state):
@@ -83,14 +91,15 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        finalStates = self.mdp.getTransitionStatesAndProbs(state, action)
-        weightedAverage = 0
-        for finalState in finalStates:
-            nextState = finalState[0]
-            probability = finalState[1]
-            weightedAverage += (probability * (self.mdp.getReward(state, action, nextState) + (self.discount * self.values[nextState])))
-
-        return weightedAverage
+        transitions = self.mdp.getTransitionStatesAndProbs(state, action)
+        qValue = sum(
+            transitionProbability * (
+                self.mdp.getReward(state, action, nextState) + 
+                self.discount * self.values[nextState]
+            )
+            for nextState, transitionProbability in transitions
+        )
+        return qValue
 
     def computeActionFromValues(self, state):
         """
@@ -104,16 +113,14 @@ class ValueIterationAgent(ValueEstimationAgent):
         "*** YOUR CODE HERE ***"
         if self.mdp.isTerminal(state):
             return None
-        allActionsForState = self.mdp.getPossibleActions(state)
-        finalAction = ""
-        maxSum = float("-inf")
-        for action in allActionsForState:
-            weightedAverage = self.computeQValueFromValues(state, action)
-            if (maxSum == 0.0 and action == "") or weightedAverage >= maxSum:
-                finalAction = action
-                maxSum = weightedAverage
 
-        return finalAction
+        actions = self.mdp.getPossibleActions(state)
+        bestAction = max(
+            actions,
+            key=lambda action: self.computeQValueFromValues(state, action),
+            default=None
+        )
+        return bestAction
 
 
     def getPolicy(self, state):
