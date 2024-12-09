@@ -356,12 +356,13 @@ def betterEvaluationFunction(currentGameState: GameState):
     distancesToFoodList = [util.manhattanDistance(newPos, foodPos) for foodPos in newFood.asList()]
     if len(distancesToFoodList) > 0:
         score += WEIGHT_FOOD / min(distancesToFoodList)
-    else:
-        score += WEIGHT_FOOD
+    # else:
+        # score += WEIGHT_FOOD
 
     # Evaluate the distance to ghosts
     for ghost in newGhostStates:
         distance = manhattanDistance(newPos, ghost.getPosition())
+
         if distance > 0:
             if ghost.scaredTimer > 0:  # If scared, add points
                 score += WEIGHT_SCARED_GHOST / distance
